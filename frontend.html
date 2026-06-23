@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Student Performance Predictor</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+  <style>
+    :root {
+      --bg-1: #f4fbf8;
+      --bg-2: #eef7fb;
+      --panel: rgba(255, 255, 255, 0.88);
+      --text: #0f172a;
+      --muted: #475569;
+      --green: #15803d;
+      --teal: #0f766e;
+      --cyan: #0891b2;
+      --amber: #f59e0b;
+      --border: rgba(15, 23, 42, 0.08);
+      --shadow: 0 18px 45px rgba(15, 23, 42, 0.08);
+      --sidebar-top: #0f172a;
+      --sidebar-bottom: #14532d;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: "Manrope", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(22, 163, 74, 0.18), transparent 28%),
+        radial-gradient(circle at top right, rgba(14, 116, 144, 0.20), transparent 30%),
+        linear-gradient(135deg, var(--bg-1) 0%, var(--bg-2) 100%);
+      min-height: 100vh;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      min-height: 100vh;
+    }
+
+    .sidebar {
+      background: linear-gradient(180deg, var(--sidebar-top) 0%, var(--sidebar-bottom) 100%);
+      color: #f8fafc;
+      padding: 28px 22px;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+    }
+
+    .brand {
+      margin-bottom: 28px;
+    }
+
+    .brand h1 {
+      font-size: 1.4rem;
+      margin: 0 0 8px;
+    }
+
+    .brand p {
+      margin: 0;
+      color: rgba(248, 250, 252, 0.78);
+      line-height: 1.5;
+      font-size: 0.95rem;
+    }
+
+    .nav {
+      display: grid;
+      gap: 10px;
+      margin: 24px 0;
+    }
+
+    .nav button {
+      width: 100%;
+      border: 0;
+      border-radius: 14px;
+      padding: 14px 16px;
+      text-align: left;
+      font: inherit;
+      color: #f8fafc;
+      background: rgba(255, 255, 255, 0.08);
+      cursor: pointer;
+      transition: transform 0.2s ease, background 0.2s ease;
+    }
+
+    .nav button.active,
+    .nav button:hover {
+      background: rgba(255, 255, 255, 0.16);
+      transform: translateX(4px);
+    }
+
+    .sidebar-note {
+      margin-top: 28px;
+      padding: 16px;
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.08);
+      color: rgba(248, 250, 252, 0.88);
+      line-height: 1.6;
+      font-size: 0.92rem;
+    }
+
+    .content {
+      padding: 30px;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 22px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+    }
+
+    .hero {
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+
+    .hero h2 {
+      margin: 0 0 10px;
+      font-size: 2.2rem;
+      line-height: 1.1;
+    }
+
+    .hero p {
+      margin: 0;
+      color: #334155;
+      max-width: 900px;
+      line-height: 1.7;
+    }
+
+    .section {
+      display: none;
+      animation: fadeUp 0.35s ease;
+    }
+
+    .section.active {
+      display: block;
+    }
+
+    @keyframes fadeUp {
+      from {
+        opacity: 0;
+        transform: translateY(8px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .grid-2,
+    .grid-3 {
+      display: grid;
+      gap: 20px;
+    }
+
+    .grid-2 {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .grid-3 {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .card {
+      padding: 22px;
+    }
+
+    .card h3,
+    .card h4 {
+      margin-top: 0;
+    }
+
+    .muted {
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .metric {
+      padding: 18px 20px;
+    }
+
+    .metric-label {
+      font-size: 0.9rem;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    .metric-value {
+      font-size: 1.8rem;
+      font-weight: 800;
+    }
+
+    .form-grid {
+      display: grid;
+      gap: 16px;
+    }
+
+    label {
+      display: grid;
+      gap: 8px;
+      font-weight: 600;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--green);
+    }
+
+    .range-meta {
+      display: flex;
+      justify-content: space-between;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    .button {
+      border: 0;
+      border-radius: 14px;
+      background: linear-gradient(135deg, var(--green), var(--teal));
+      color: white;
+      padding: 14px 18px;
+      font: inherit;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      box-shadow: 0 12px 30px rgba(21, 128, 61, 0.24);
+    }
+
+    .button:hover {
+      transform: translateY(-1px);
+    }
+
+    .kpi-strip {
+      margin-top: 20px;
+      margin-bottom: 24px;
+    }
+
+    .table-wrap {
+      overflow: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th, td {
+      text-align: left;
+      padding: 12px 10px;
+      border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+      font-size: 0.95rem;
+    }
+
+    th {
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    .chart {
+      min-height: 320px;
+    }
+
+    .note {
+      margin-top: 18px;
+      padding: 16px;
+      border-radius: 16px;
+      background: rgba(15, 118, 110, 0.08);
+      color: #134e4a;
+      line-height: 1.6;
+    }
+
+    @media (max-width: 1100px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      .sidebar {
+        position: relative;
+        height: auto;
+      }
+
+      .grid-2,
+      .grid-3 {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="brand">
+        <h1>Student Performance Predictor</h1>
+        <p>Standalone HTML frontend for prediction, analytics, and academic insights.</p>
+      </div>
+
+      <div class="nav">
+        <button class="active" data-target="overview">Overview</button>
+        <button data-target="predict">Predict Grade</button>
+        <button data-target="dashboard">Dashboard</button>
+        <button data-target="insights">Insights</button>
+      </div>
+
+      <div class="sidebar-note">
+        This frontend is ready to connect to a Python backend later. Right now it includes a working demo prediction flow and interactive charts.
+      </div>
+    </aside>
+
+    <main class="content">
+      <section class="hero panel">
+        <h2>Student Performance Prediction</h2>
+        <p>
+          Predict final grades using attendance, study habits, prior marks, assignment completion, and sleep balance.
+          This frontend mirrors the Streamlit app in a clean, professional HTML layout.
+        </p>
+      </section>
+
+      <section id="overview" class="section active">
+        <div class="grid-2">
+          <div class="panel card">
+            <h3>Project Overview</h3>
+            <p class="muted">
+              This web interface is designed for academic teams, schools, and student analytics demos. It includes a prediction form, dashboard charts, and insight summaries in one responsive layout.
+            </p>
+          </div>
+          <div class="panel card">
+            <h3>Model Inputs</h3>
+            <p class="muted">
+              Attendance, study hours, previous marks, assignments completed, and sleep hours are used to estimate the final grade.
+            </p>
+          </div>
+        </div>
+
+        <div class="grid-3 kpi-strip">
+          <div class="panel metric">
+            <div class="metric-label">Students in Sample</div>
+            <div class="metric-value">60</div>
+          </div>
+          <div class="panel metric">
+            <div class="metric-label">Average Grade</div>
+            <div class="metric-value">76.9</div>
+          </div>
+          <div class="panel metric">
+            <div class="metric-label">Average Attendance</div>
+            <div class="metric-value">83.1%</div>
+          </div>
+        </div>
+
+        <div class="panel card">
+          <h3>Dataset Preview</h3>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>attendance</th>
+                  <th>study_hours</th>
+                  <th>previous_marks</th>
+                  <th>assignments_completed</th>
+                  <th>sleep_hours</th>
+                  <th>final_grade</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td>92</td><td>4.5</td><td>78</td><td>9</td><td>7.2</td><td>82</td></tr>
+                <tr><td>88</td><td>3.8</td><td>74</td><td>8</td><td>6.8</td><td>77</td></tr>
+                <tr><td>95</td><td>5.6</td><td>85</td><td>10</td><td>7.5</td><td>90</td></tr>
+                <tr><td>76</td><td>2.4</td><td>62</td><td>6</td><td>6.1</td><td>65</td></tr>
+                <tr><td>84</td><td>3.1</td><td>70</td><td>7</td><td>6.9</td><td>73</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section id="predict" class="section">
+        <div class="grid-2">
+          <div class="panel card">
+            <h3>Prediction Form</h3>
+            <div class="form-grid">
+              <label>
+                Attendance (%)
+                <input id="attendance" type="range" min="50" max="100" value="85">
+                <div class="range-meta"><span>50</span><span id="attendanceValue">85</span><span>100</span></div>
+              </label>
+
+              <label>
+                Study Hours / Day
+                <input id="study_hours" type="range" min="1" max="10" step="0.1" value="4">
+                <div class="range-meta"><span>1</span><span id="studyHoursValue">4.0</span><span>10</span></div>
+              </label>
+
+              <label>
+                Previous Marks
+                <input id="previous_marks" type="range" min="40" max="100" value="75">
+                <div class="range-meta"><span>40</span><span id="previousMarksValue">75</span><span>100</span></div>
+              </label>
+
+              <label>
+                Assignments Completed
+                <input id="assignments_completed" type="range" min="0" max="10" value="8">
+                <div class="range-meta"><span>0</span><span id="assignmentsValue">8</span><span>10</span></div>
+              </label>
+
+              <label>
+                Sleep Hours / Day
+                <input id="sleep_hours" type="range" min="4" max="10" step="0.1" value="7">
+                <div class="range-meta"><span>4</span><span id="sleepHoursValue">7.0</span><span>10</span></div>
+              </label>
+
+              <button class="button" id="predictButton">Predict Final Grade</button>
+            </div>
+          </div>
+
+          <div class="grid-2">
+            <div class="panel card">
+              <h3>Prediction Result</h3>
+              <div id="gradeGauge" class="chart"></div>
+            </div>
+            <div class="panel card">
+              <h3>Benchmark Comparison</h3>
+              <div id="comparisonChart" class="chart"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel card" style="margin-top: 20px;">
+          <h3>Input Snapshot</h3>
+          <div id="snapshotChart" class="chart"></div>
+        </div>
+      </section>
+
+      <section id="dashboard" class="section">
+        <div class="grid-3 kpi-strip">
+          <div class="panel metric">
+            <div class="metric-label">Students in Dataset</div>
+            <div class="metric-value">60</div>
+          </div>
+          <div class="panel metric">
+            <div class="metric-label">Average Final Grade</div>
+            <div class="metric-value">76.9</div>
+          </div>
+          <div class="panel metric">
+            <div class="metric-label">Average Sleep Hours</div>
+            <div class="metric-value">6.8</div>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="panel card">
+            <h3>Study Hours vs Final Grade</h3>
+            <div id="scatterChart" class="chart"></div>
+          </div>
+          <div class="panel card">
+            <h3>Feature Correlation Heatmap</h3>
+            <div id="heatmapChart" class="chart"></div>
+          </div>
+        </div>
+
+        <div class="grid-2" style="margin-top: 20px;">
+          <div class="panel card">
+            <h3>Final Grade Distribution</h3>
+            <div id="histogramChart" class="chart"></div>
+          </div>
+          <div class="panel card">
+            <h3>Assignments vs Performance</h3>
+            <div id="assignmentChart" class="chart"></div>
+          </div>
+        </div>
+      </section>
+
+      <section id="insights" class="section">
+        <div class="grid-2">
+          <div class="panel card">
+            <h3>High Performer Snapshot</h3>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>attendance</th>
+                    <th>study_hours</th>
+                    <th>previous_marks</th>
+                    <th>final_grade</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr><td>99</td><td>6.6</td><td>95</td><td>98</td></tr>
+                  <tr><td>98</td><td>6.3</td><td>92</td><td>96</td></tr>
+                  <tr><td>97</td><td>6.2</td><td>91</td><td>95</td></tr>
+                  <tr><td>97</td><td>6.1</td><td>93</td><td>96</td></tr>
+                  <tr><td>96</td><td>6.4</td><td>91</td><td>95</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="panel card">
+            <h3>Average Grade by Sleep Hours</h3>
+            <div id="sleepChart" class="chart"></div>
+          </div>
+        </div>
+
+        <div class="panel card note">
+          Balanced routines consistently align with stronger results in this sample. Students with high attendance, regular study time, strong previous marks, and consistent assignment completion tend to achieve the best final grades.
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const sampleData = [
+      { attendance: 92, study_hours: 4.5, previous_marks: 78, assignments_completed: 9, sleep_hours: 7.2, final_grade: 82 },
+      { attendance: 88, study_hours: 3.8, previous_marks: 74, assignments_completed: 8, sleep_hours: 6.8, final_grade: 77 },
+      { attendance: 95, study_hours: 5.6, previous_marks: 85, assignments_completed: 10, sleep_hours: 7.5, final_grade: 90 },
+      { attendance: 76, study_hours: 2.4, previous_marks: 62, assignments_completed: 6, sleep_hours: 6.1, final_grade: 65 },
+      { attendance: 84, study_hours: 3.1, previous_marks: 70, assignments_completed: 7, sleep_hours: 6.9, final_grade: 73 },
+      { attendance: 97, study_hours: 6.2, previous_marks: 91, assignments_completed: 10, sleep_hours: 7.8, final_grade: 95 },
+      { attendance: 68, study_hours: 1.9, previous_marks: 58, assignments_completed: 5, sleep_hours: 5.9, final_grade: 59 },
+      { attendance: 90, study_hours: 4.2, previous_marks: 80, assignments_completed: 8, sleep_hours: 7.1, final_grade: 83 },
+      { attendance: 81, study_hours: 3.4, previous_marks: 67, assignments_completed: 7, sleep_hours: 6.5, final_grade: 71 },
+      { attendance: 86, study_hours: 4.8, previous_marks: 76, assignments_completed: 8, sleep_hours: 7.0, final_grade: 80 }
+    ];
+
+    const navButtons = document.querySelectorAll(".nav button");
+    const sections = document.querySelectorAll(".section");
+
+    navButtons.forEach((button) => {
+      button.addEventListener("click", () => {
+        navButtons.forEach((btn) => btn.classList.remove("active"));
+        sections.forEach((section) => section.classList.remove("active"));
+        button.classList.add("active");
+        document.getElementById(button.dataset.target).classList.add("active");
+      });
+    });
+
+    const inputs = {
+      attendance: document.getElementById("attendance"),
+      study_hours: document.getElementById("study_hours"),
+      previous_marks: document.getElementById("previous_marks"),
+      assignments_completed: document.getElementById("assignments_completed"),
+      sleep_hours: document.getElementById("sleep_hours")
+    };
+
+    const valueTargets = {
+      attendance: document.getElementById("attendanceValue"),
+      study_hours: document.getElementById("studyHoursValue"),
+      previous_marks: document.getElementById("previousMarksValue"),
+      assignments_completed: document.getElementById("assignmentsValue"),
+      sleep_hours: document.getElementById("sleepHoursValue")
+    };
+
+    Object.entries(inputs).forEach(([key, input]) => {
+      input.addEventListener("input", () => {
+        const value = Number(input.value);
+        valueTargets[key].textContent = key === "study_hours" || key === "sleep_hours" ? value.toFixed(1) : value;
+      });
+    });
+
+    function predictGrade() {
+      const attendance = Number(inputs.attendance.value);
+      const studyHours = Number(inputs.study_hours.value);
+      const previousMarks = Number(inputs.previous_marks.value);
+      const assignments = Number(inputs.assignments_completed.value);
+      const sleepHours = Number(inputs.sleep_hours.value);
+
+      let grade =
+        attendance * 0.18 +
+        studyHours * 5.2 +
+        previousMarks * 0.42 +
+        assignments * 1.9 +
+        sleepHours * 1.3 -
+        8;
+
+      grade = Math.max(0, Math.min(100, grade));
+      return Number(grade.toFixed(2));
+    }
+
+    function renderPredictionCharts() {
+      const grade = predictGrade();
+      const averageGrade = 76.9;
+      const topQuartile = 89.5;
+
+      Plotly.newPlot("gradeGauge", [{
+        type: "indicator",
+        mode: "gauge+number",
+        value: grade,
+        number: { suffix: " / 100" },
+        title: { text: "Predicted Final Grade" },
+        gauge: {
+          axis: { range: [0, 100] },
+          bar: { color: "#15803d" },
+          steps: [
+            { range: [0, 60], color: "#fee2e2" },
+            { range: [60, 80], color: "#fef3c7" },
+            { range: [80, 100], color: "#dcfce7" }
+          ]
+        }
+      }], {
+        margin: { l: 20, r: 20, t: 50, b: 20 },
+        paper_bgcolor: "rgba(0,0,0,0)",
+        plot_bgcolor: "rgba(0,0,0,0)"
+      }, { displayModeBar: false, responsive: true });
+
+      Plotly.newPlot("comparisonChart", [{
+        type: "bar",
+        x: ["Your Prediction", "Dataset Average", "Top Quartile"],
+        y: [grade, averageGrade, topQuartile],
+        marker: { color: ["#15803d", "#0891b2", "#f59e0b"] },
+        text: [grade, averageGrade, topQuartile].map(v => v.toFixed(2)),
+        textposition: "auto"
+      }], {
+        margin: { l: 30, r: 20, t: 10, b: 50 },
+        paper_bgcolor: "rgba(0,0,0,0)",
+        plot_bgcolor: "rgba(0,0,0,0)",
+        yaxis: { title: "Grade" }
+      }, { displayModeBar: false, responsive: true });
+
+      Plotly.newPlot("snapshotChart", [{
+        type: "scatterpolar",
+        r: [
+          Number(inputs.attendance.value),
+          Number(inputs.study_hours.value) * 10,
+          Number(inputs.previous_marks.value),
+          Number(inputs.assignments_completed.value) * 10,
+          Number(inputs.sleep_hours.value) * 10
+        ],
+        theta: ["Attendance", "Study Hours", "Previous Marks", "Assignments", "Sleep Hours"],
+        fill: "toself",
+        line: { color: "#0f766e" }
+      }], {
+        margin: { l: 30, r: 30, t: 10, b: 10 },
+        polar: {
+          bgcolor: "rgba(0,0,0,0)"
+        },
+        paper_bgcolor: "rgba(0,0,0,0)"
+      }, { displayModeBar: false, responsive: true });
+    }
+
+    function renderDashboardCharts() {
+      Plotly.newPlot("scatterChart", [{
+        type: "scatter",
+        mode: "markers",
+        x: sampleData.map(d => d.study_hours),
+        y: sampleData.map(d => d.final_grade),
+        marker: {
+          size: sampleData.map(d => d.attendance / 4),
+          color: sampleData.map(d => d.previous_marks),
+          colorscale: "Viridis",
+          showscale: true
+        },
+        text: sampleData.map(d => `Attendance: ${d.attendance}%`)
+      }], {
+        margin: { l: 50, r: 20, t: 10, b: 50 },
+        xaxis: { title: "Study Hours" },
+        yaxis: { title: "Final Grade" },
+        paper_bgcolor: "rgba(0,0,0,0)",
+        plot_bgcolor: "rgba(0,0,0,0)"
+      }, { displayModeBar: false, responsive: true });
+
+      Plotly.newPlot("heatmapChart", [{
+        type: "heatmap",
+        z: [
+          [1.00, 0.93, 0.96, 0.91, 0.82, 0.97],
+          [0.93, 1.00, 0.94, 0.89, 0.78, 0.96],
+          [0.96, 0.94, 1.00, 0.88, 0.75, 0.98],
+          [0.91, 0.89, 0.88, 1.00, 0.70, 0.92],
+          [0.82, 0.78, 0.75, 0.70, 1.00, 0.81],
+          [0.97, 0.96, 0.98, 0.92, 0.81, 1.00]
+        ],
+        x: ["attendance", "study_hours", "previous_marks", "assignments_completed", "sleep_hours", "final_grade"],
+        y: ["attendance", "study_hours", "previous_marks", "assignments_completed", "sleep_hours", "final_grade"],
+        colorscale: "YlGnBu"
+      }], {
+        margin: { l: 90, r: 20, t: 10, b: 90 },
+        paper_bgcolor: "rgba(0,0,0,0)",
+        plot_bgcolor: "rgba(0,0,0,0)"
+      }, { displayModeBar: false, responsive: true });
+
+      Plotly.newPlot("histogramChart", [{
+        type: "histogram",
+        x: sampleData.map(d => d.final_grade),
+        marker: { color: "#0f766e" }
+      }], {
+        margin: { l: 50, r: 20, t: 10, b: 50 },
+        xaxis: { title: "Final Grade" },
+        yaxis: { title: "Count" },
+        paper_bgcolor: "rgba(0,0,0,0)",
+        plot_bgcolor: "rgba(0,0,0,0)"
+      }, { displayModeBar: false, responsive: true });
+
+      Plotly.newPlot("assignmentChart", [{
+        type: "bar",
+        x: sampleData.map(d => d.assignments_completed),
+        y: sampleData.map(d => d.final_grade),
+        marker: { color: "#f59e0b" }
+      }], {
+        margin: { l: 50, r: 20, t: 10, b: 50 },
+        xaxis: { title: "Assignments Completed" },
+        yaxis: { title: "Final Grade" },
+        paper_bgcolor: "rgba(0,0,0,0)",
+        plot_bgcolor: "rgba(0,0,0,0)"
+      }, { displayModeBar: false, responsive: true });
+    }
+
+    function renderInsightsChart() {
+      Plotly.newPlot("sleepChart", [{
+        type: "scatter",
+        mode: "lines+markers",
+        x: [5.8, 6.0, 6.2, 6.5, 6.8, 7.0, 7.2, 7.5, 7.8],
+        y: [57, 63, 66, 71, 77, 80, 84, 91, 96],
+        line: { color: "#16a34a", width: 4 },
+        fill: "tozeroy",
+        fillcolor: "rgba(22, 163, 74, 0.14)"
+      }], {
+        margin: { l: 50, r: 20, t: 10, b: 50 },
+        xaxis: { title: "Sleep Hours" },
+        yaxis: { title: "Average Final Grade" },
+        paper_bgcolor: "rgba(0,0,0,0)",
+        plot_bgcolor: "rgba(0,0,0,0)"
+      }, { displayModeBar: false, responsive: true });
+    }
+
+    document.getElementById("predictButton").addEventListener("click", renderPredictionCharts);
+
+    renderPredictionCharts();
+    renderDashboardCharts();
+    renderInsightsChart();
+  </script>
+</body>
+</html>
