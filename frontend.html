@@ -110,6 +110,14 @@
       padding: 30px;
     }
 
+    .mobile-nav-hint {
+      display: none;
+      margin-top: 14px;
+      color: rgba(248, 250, 252, 0.78);
+      font-size: 0.9rem;
+      line-height: 1.5;
+    }
+
     .panel {
       background: var(--panel);
       border: 1px solid var(--border);
@@ -293,6 +301,115 @@
         grid-template-columns: 1fr;
       }
     }
+
+    @media (max-width: 768px) {
+      .content {
+        padding: 16px;
+      }
+
+      .sidebar {
+        padding: 18px 16px;
+      }
+
+      .brand {
+        margin-bottom: 18px;
+      }
+
+      .brand h1 {
+        font-size: 1.2rem;
+      }
+
+      .nav {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+      }
+
+      .nav button {
+        padding: 12px;
+        text-align: center;
+        font-size: 0.92rem;
+      }
+
+      .nav button.active,
+      .nav button:hover {
+        transform: none;
+      }
+
+      .mobile-nav-hint {
+        display: block;
+      }
+
+      .sidebar-note {
+        margin-top: 16px;
+        padding: 14px;
+        font-size: 0.88rem;
+      }
+
+      .hero {
+        padding: 18px;
+        margin-bottom: 16px;
+      }
+
+      .hero h2 {
+        font-size: 1.6rem;
+      }
+
+      .hero p,
+      .muted,
+      .note {
+        font-size: 0.95rem;
+      }
+
+      .card,
+      .metric {
+        padding: 16px;
+      }
+
+      .metric-value {
+        font-size: 1.45rem;
+      }
+
+      .form-grid {
+        gap: 14px;
+      }
+
+      label {
+        font-size: 0.95rem;
+      }
+
+      .button {
+        width: 100%;
+        padding: 14px 16px;
+      }
+
+      .chart {
+        min-height: 260px;
+      }
+
+      th, td {
+        padding: 10px 8px;
+        font-size: 0.88rem;
+        white-space: nowrap;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .nav {
+        grid-template-columns: 1fr;
+      }
+
+      .hero h2 {
+        font-size: 1.4rem;
+      }
+
+      .range-meta {
+        font-size: 0.82rem;
+      }
+
+      .chart {
+        min-height: 220px;
+      }
+    }
   </style>
 </head>
 <body>
@@ -308,6 +425,10 @@
         <button data-target="predict">Predict Grade</button>
         <button data-target="dashboard">Dashboard</button>
         <button data-target="insights">Insights</button>
+      </div>
+
+      <div class="mobile-nav-hint">
+        Tap a section to switch between prediction, charts, and insights on mobile.
       </div>
 
       <div class="sidebar-note">
